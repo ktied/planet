@@ -78,37 +78,41 @@ indir <- paste0("data/input/")
 outdir <-'data/planet_masked/'
 
 #Find all the files
-dn <- list.files(path = indir, pattern =  c("*AnalyticMS_clip.tif$|*AnalyticMS_SR_clip.tif$"), recursive = T) # annoying as fuck the ychanged the names again  
+dn <- list.files(path = indir, pattern =  c("*AnalyticMS_clip.tif$|*AnalyticMS_SR_clip.tif$"), recursive = T) # 
 
 dn
 
-j <- str_extract(dn, "[^/]*$")
-outfile <- sub("_3B_AnalyticMS_SR_clip.tif.*", "", j)   
-#Paths 
-pat <- sub("_3B_AnalyticMS_SR_clip.tif.*", "", dn)    
 
-for (i in (1:length(dn))){
+
+
+MaskFun <- function(x, indir , outdir, CF = 0 ){
   
-  outname <- paste0(outdir, outfile[i],'_ps4_3B_Analytic_MS_masked', '.tif')
+  j <- str_extract(x, "[^/]*$")
+  outfile <- sub("_3B_AnalyticMS_SR_clip.tif.*", "", j)   
+  #Paths 
+  pat <- sub("_3B_AnalyticMS_SR_clip.tif.*", "", x)    
+  
+  
+  outname <- paste0(outdir, outfile,'_ps4_3B_Analytic_MS_masked', '.tif')
   print(outname)
   
-  if(!file.exists(outname)){ #This is to avoid rerunning 
-    rawrast <- rast(paste0(indir,dn[i]))
-    print(paste0(indir,dn[i]))
+#  if(!file.exists(outname)){ #This is to avoid rerunning 
+    rawrast <- rast(paste0(indir, x))
+    print(paste0(indir,x))
     
-    if(file.exists(paste0(indir, pat[i], "_3B_udm2_clip.tif"))){
-      maskj <- rast(paste0(indir, pat[i], "_3B_udm2_clip.tif"))
+    if(file.exists(paste0(indir, pat, "_3B_udm2_clip.tif"))){
+      maskj <- rast(paste0(indir, pat, "_3B_udm2_clip.tif"))
       
-      print(paste0(indir, pat[i], "_3B_udm2_clip.tif"))
+      print(paste0(indir, pat, "_3B_udm2_clip.tif"))
       
       ###Should be a function, but here you can define your confidence level 
-      idealmask <- maskj[[1]] == 1 & maskj[[2]] == 0 & maskj[[3]]==0 & maskj[[4]]==0 & maskj[[5]]==0 & maskj[[6]] == 0 
+      idealmask <- maskj[[1]] == 1 & maskj[[2]] == 0 & maskj[[3]]==0 & maskj[[4]]==0 & maskj[[5]]==0 & maskj[[6]] == 0 & maskj[[7]] > CF
       
     } else {
       
-      maskj <- rast(paste0(indir, pat[i], "_3B_AnalyticMS_DN_udm_clip.tif"))
+      maskj <- rast(paste0(indir, pat, "_3B_AnalyticMS_DN_udm_clip.tif"))
       
-      print(paste0(indir, pat[i], "_3B_AnalyticMS_DN_udm_clip.tif"))
+      print(paste0(indir, pat, "_3B_AnalyticMS_DN_udm_clip.tif"))
       
       idealmask <- maskj < 5 
       
@@ -116,17 +120,23 @@ for (i in (1:length(dn))){
     
     
     maskit <- mask(rawrast, idealmask, maskvalue=0, filename = outname, overwrite=T)
-  }
+    return(maskit)
+  #}
   
 }
+
+#One individual one 
+dn1 <- MaskFun(dn[1], indir, outdir, CF = 80)
+
+
+#On the list as a whole 
+s <- lapply(dn, MaskFun, indir, outdir, CF = 80)
 
 
 #Now you have cloud masked rasters, and for each date you may want to mosaic 
 
-
-
-
-#THis works really well to mosaic the rasters - do we want to cloud mask first and add that as another script????
+#THis worked  well to mosaic the rasters - however GdalUtils has depreciated,
+#I'm now using vrt as suggested by Robert: #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
 
 outMo <-'data/planet_processed/'
 
