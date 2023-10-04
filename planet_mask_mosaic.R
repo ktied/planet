@@ -85,7 +85,7 @@ dn
 
 
 
-MaskFun <- function(x, indir , outdir, CF = 0 ){
+MaskFun <- function(x, indir , outdir, CF = 0 ){ #CF is the confidence 0-100
   
   j <- str_extract(x, "[^/]*$")
   outfile <- sub("_3B_AnalyticMS_SR_clip.tif.*", "", j)   
