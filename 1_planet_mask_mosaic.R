@@ -1,5 +1,5 @@
 #K Tiedeman
-#adapted from BCI repository 
+#adapted from BCI repository: 0_planet_masking 
 #4 October 2023
 
 
@@ -132,6 +132,7 @@ dn1 <- MaskFun(dn[1], indir, outdir, CF = 80)
 #On the list as a whole 
 s <- lapply(dn, MaskFun, indir, outdir, CF = 80)
 
+##################################################################################
 
 #Now you have cloud masked rasters, and for each date you may want to mosaic 
 
@@ -151,18 +152,23 @@ pa <- str_extract(j, "[^_]+")
 dt <- unlist(unique(pa))
 
 
+
+
 for (i in (1:length(dt))){
   
   outname <- paste0(outMo, dt[i],'_ps4_3B_Analytic_MS_processed', '.tif')
   print(outname)
-  if(!file.exists(outname)){
-   # indir2 <- paste0(outdir)
+  #if(!file.exists(outname)){  #This piece can be uncommented if you're rerunning and don't want to redo work 
+
     rr <- dn[grep(dt[i], dn)]
     rr <- paste0(outdir, rr)
-    v <- vrt(c(rr)) #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
-    writeRaster(v, outname, overwrite =T)
+   # v <- vrt(c(rr)) #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
+    gg <- lapply(rr, rast)
+    rsrc <- sprc(gg)
+    m <- mosaic(rsrc)
+    writeRaster(m, outname, overwrite =T)
     #mosaic_rasters(gdalfile = rr, dst_dataset = outname, of="GTiff", verbose=TRUE)#, co = list(list("COMPRESS" = "DEFLATE")))
-  }
+  #}
   
 }
 

@@ -1,92 +1,148 @@
 #Planet Stack and Extract 
+#K Tiedeman
+#adapted from BCI repository: script 2a_planet_timeseries_extract 
+#11 October 2023
 
 #Planet extract...
+
 library(terra)
+library(raster)
 library(dismo)
 library(stringr)
+library(geodata)
 
-this <- system('hostname', TRUE)
-if (this == "DESKTOP-J9EEJ0L") {
-  dp <- "C:/Users/Kate/Dropbox/R_data/bci"
-} else {
-  dp <- "//10.126.19.90/EAS_ind/ktiedeman/data/bci" 
+###Function###
+
+addVI <- function(x){
+  x$NDVI <- (x$nir - x$red) / (x$nir + x$red)
+  x$GNDVI <- (x$nir - x$green) / (x$nir + x$green)
+  x$GRVI <- (x$green - x$red) / (x$green + x$red)
+  x$GBVI <- (x$blue - x$green) / (x$blue + x$green)  
+  x$EVI <- 2.5 * ((x$nir - x$red) / (x$nir + 6 * x$red - 7.5 * x$blue + 1))
+  x$GCVI <- (x$nir/x$green)-1
+  return(x)
 }
 
-setwd(dp) ### set directory
-
-allpt <- vect( "data/intermediate_crowns_points/DiptPresAbse1921pts_inBoth.shp")
-#read in bci imagery 
-
-s <- vect("//10.126.19.90/EAS_ind/ktiedeman/data/bci/data/Tree2006AstTab.shp")
 
 
-##Let's move away from being a hack. 
+# This can be commented out, useful for multiple users/computers 
+this <- system('hostname', TRUE)
+if (this == "kn-eas-c003") {
+  dp <- "C:/Users/Hyaena/Documents/planet"
+} else {
+  dp <- "//10.126.19.90/EAS_ind/ktiedeman/data/bci" #
+}
 
-rastlist <- list.files(path = "data/imagery/planet_processed/", pattern='.tif$', 
+
+setwd(dp) ### set working directory
+
+#The directory with your processed planet files - same as planet mask script
+outMo <-'data/planet_processed/'
+
+
+rastlist <- list.files(path = outMo, pattern='.tif$', 
                        all.files=TRUE, full.names=TRUE)
 
 #import all raster files in folder using lapply - thank you https://stackoverflow.com/questions/52746936/how-to-efficiently-import-multiple-raster-tif-files-into-r
 d <- lapply(rastlist, rast)
 
+d
 
-extFund <- function(listrast, allpt){
+
+####
+
+crown <- vect('data/Crowns/Crowns_2020_08_01_FullyMergedWithPlotData.shp')
+plot(crown) #not sure what's happening some artifact or point outside the norm. - could clip this later to bci for ease 
+crs(crown)
+# 
+# panama<-getData('GADM', country='PAN', level=0)
+# panama <- geodata::gadm(country="PAN", level=0,path=tempdir()) #down until october 12 2023 
+
+# 
+
+
+
+crown <- project(crown, crs(d[[1]]))
+
+plotRGB(d[[1]], r=3, g=2, b=1, stretch = "lin")
+plot(crown, add=T)
+
+
+
+bci_boundary <- vect("data/Barro_Colorado_Nature_Monument_Boundaries-shp/Barro_Colorado_Nature_Monument_Boundaries.shp")
+bci_boundary <- project(bci_boundary, crs(d[[1]]))
+
+crown <- terra::crop(crown, ext(bci_boundary))
+plot(crown) # cool, removed whatever what happening outside of BCI for ease of plotting
+
+
+#Decision point - 1. a centroid of each polygon or 2. all values inside of the polygon 
+
+
+##Start with 1. Centroids 
+
+y <- terra::centroids(crown) #,TRUE) #not a "true centroid", but will be inside of the polygon 
+#(the points returned are guaranteed to be inside the polygons or on the lines, but they are not the true centroids.
+#True centroids may be outside a polygon, for example when a polygon is "bean shaped")
+
+
+extFund <- function(listrast, pts){
   
-  al <- extract(listrast, allpt) 
-  al <- data.frame(pkuid = allpt$pkuid, dipteryx= allpt$dipteryx, al)
+  al <- extract(listrast, pts,  xy = T, method = "simple", bind=T)
+  x <- cbind(pts, al)
+  
   
   dr <- sources(listrast)
   j <- str_extract(dr, "[^/]*$")[1] #unneccesary, but if they're in a subfolder helpful 
   #Extract just the date itself 
-  #al <- as.data.frame(al)
-  al$date <- str_extract(j, "[^_]+")
-  names(al) <- c("pkuid","dipteryx","ID", "blue", "green", "red", "nir", "date")
-  
-  return(al)
+  x <- as.data.frame(x)
+  x$date_Pl <- str_extract(j, "[^_]+") 
+ 
+  return(x)
 }
 
 
 
-extFundND <- function(listrast, allpt){
-  
-  al <- extract(listrast, allpt) 
-  al <- data.frame(Species = allpt$Species, ID= allpt$id_1, al)
-  
-  dr <- sources(listrast)
-  j <- str_extract(dr, "[^/]*$")[1] #unneccesary, but if they're in a subfolder helpful 
-  #Extract just the date itself 
-  #al <- as.data.frame(al)
-  al$date <- str_extract(j, "[^_]+")
-  names(al) <- c("Species","ID", "n", "blue", "green", "red", "nir", "date")
-  
-  return(al)
-}
-
-
-
-fgg <- lapply(d, extFundND, allpt = s) #fgg <- lapply(d, extFund, allpt = allpt)
-
-
+fgg <- lapply(d, extFund, pts = y) #fgg <- lapply(d, extFund, allpt = allpt)
 fgrg <- do.call("rbind", fgg)
 
+
+#Cleaning
 fgrg <- fgrg[complete.cases(fgrg$blue),]
 
-fgrg$day <-as.Date(as.character(fgrg$date), "%Y%m%d")
-fgrg$pkuid <- as.numeric(as.character(fgrg$pkuid))
+fgrg$day <-as.Date(as.character(fgrg$date_Pl), "%Y%m%d")
 
-#This should be moved to a different script, but for now, it stays
-fgrg$NDVI <- (fgrg$nir - fgrg$red) / (fgrg$nir + fgrg$red)
-fgrg$GNDVI <- (fgrg$nir - fgrg$green) / (fgrg$nir + fgrg$green)
-fgrg$GRVI <- (fgrg$green - fgrg$red) / (fgrg$green + fgrg$red)
-fgrg$GBVI <- (fgrg$blue - fgrg$green) / (fgrg$blue + fgrg$green)  
-fgrg$EVI <- 2.5 * ((fgrg$nir - fgrg$red) / (fgrg$nir + 6 * fgrg$red - 7.5 * fgrg$blue + 1))
-fgrg$GCVI <- (fgrg$nir/fgrg$green)-1
+fgrg <- addVI(fgrg)
 
-startday <- min(fgrg$date)
-endday <- max(fgrg$date)
+
+startday <- min(fgrg$date_Pl)
+endday <- max(fgrg$date_Pl)
+
 write.csv(fgrg, paste0("data/planet/planet_timeseries_nondipt_pts_", startday, "_",endday, ".csv" ))
 
 
 #https://www.rdocumentation.org/packages/RStoolbox/versions/0.2.6/topics/spectralIndices
+
+
+##################Polygons ################
+
+
+
+
+
+
+
+ac <- extract(d[[1]], crown,  xy = T, method = "simple", bind=T)
+
+
+
+
+
+
+
+
+
+
 
 
 #okay so what if we extract the polygons, maybe that's why we're not seeing a big signal??
