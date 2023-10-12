@@ -71,7 +71,7 @@ plot(crown) # cool, removed whatever what happening outside of BCI for ease of p
 #############################################
 #Decision point - 1. a centroid of each polygon or 2. all values inside of the polygon 
 
-
+###############################
 ###### Centroids ##############
 
 y <- terra::centroids(crown) #,TRUE) #not a "true centroid", but will be inside of the polygon 
@@ -115,8 +115,8 @@ write.csv(fgrg, paste0("data/extracted_data/planet_timeseries_50HA_pts_", startd
 
 
 
-##########################################
-##################Polygons ################
+########################################
+##################Polygons #############
 
 #2a. Getting all planet values within a crown polygon 
 
