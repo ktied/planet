@@ -11,7 +11,7 @@ library(dismo)
 library(stringr)
 library(geodata)
 
-###Function###
+###Function to add Vegetation indicies###
 
 addVI <- function(x){
   x$NDVI <- (x$nir - x$red) / (x$nir + x$red)
@@ -107,7 +107,7 @@ fgg <- lapply(d, extFund, pts = y) #fgg <- lapply(d, extFund, allpt = allpt)
 fgrg <- do.call("rbind", fgg)
 
 
-#Cleaning
+#Cleaning, in case of cloud cover 
 fgrg <- fgrg[complete.cases(fgrg$blue),]
 
 fgrg$day <-as.Date(as.character(fgrg$date_Pl), "%Y%m%d")
@@ -118,7 +118,7 @@ fgrg <- addVI(fgrg)
 startday <- min(fgrg$date_Pl)
 endday <- max(fgrg$date_Pl)
 
-write.csv(fgrg, paste0("data/planet/planet_timeseries_nondipt_pts_", startday, "_",endday, ".csv" ))
+write.csv(fgrg, paste0("data/extracted_data/planet_timeseries_50HA_pts_", startday, "_",endday, ".csv" ))
 
 
 #https://www.rdocumentation.org/packages/RStoolbox/versions/0.2.6/topics/spectralIndices
@@ -129,15 +129,13 @@ write.csv(fgrg, paste0("data/planet/planet_timeseries_nondipt_pts_", startday, "
 
 
 
-
-
-
-ac <- extract(d[[1]], crown,  xy = T, method = "simple", bind=T)
+#If you 
+ac <- extract(d[[1]], crown, fun=median, xy = T, cells=T, method = "simple", bind=T)
 
 
 
 
-
+#Id field, I'm choosing stemID 
 
 
 
@@ -151,19 +149,25 @@ dip2 <- vect(dip)
 dip2$pkuid <- as.numeric(dip2$pkuid)
 #dex <- d[[2]]
 
-ExtrPolyFun <- function(rex, dip2){
+dip2 <- crown
+id <- "stemID"
+rex = d[[1]]
+
+ExtrPolyFun <- function(rex, dip2, id){
   
-  polyid <- unique(unlist(as.numeric(dip2$pkuid)))
+  polyid <- unique(unlist(dip2[[id]]))
   polylist <- list() 
   
   for (s in 1:length(polyid)){
-    lip <- dip2[dip2$pkuid == polyid[s],]
-    sf <- data.frame(extract(rex, lip))
-    names(sf) <- c("ID", "blue", "green", "red", "nir") 
-    if (dim(sf)[1] != 0){
-      sf$pkuid <- lip$pkuid
-      sf$pixid <- paste0(sf$pkuid,1:nrow(sf))
-      polylist[[s]] <- sf}
+    lip <- dip2[dip2[[id]] == polyid[s],]
+    sfg <- data.frame(extract(rex, lip, xy=T, cells = T, method="simple"))
+  #  names(sf) <- c("ID", "blue", "green", "red", "nir") 
+    if (dim(sfg)[1] != 0){
+        #sfg[[id]] <- NA
+      sfg[[id]] <- lip[[id]][1,]
+      sfg <- merge(sfg, lip, by = id) #This isn't particularly elegant, and I'm sure a function is out there that does exactly this already 
+      #sf$pixid <- paste0(sf$pkuid,1:nrow(sf))
+      polylist[[s]] <- sfg }
     
     
   } 
@@ -172,43 +176,27 @@ ExtrPolyFun <- function(rex, dip2){
   
   dr <- sources(rex)
   j <- str_extract(dr, "[^/]*$")[1] 
-  plist$date <- str_extract(j, "[^_]+")
+  plist$date_Pl <- str_extract(j, "[^_]+")
   return(plist)  
   
 }
 
 
-ppe <- lapply(d, ExtrPolyFun, dip2=dip2)
+ppe <- lapply(d, ExtrPolyFun, dip2=crown, id="stemID")
 
 ppe2 <- do.call(rbind, ppe)
 
 
 
-ppe2$day <-as.Date(as.character(ppe2$date), "%Y%m%d")
-ppe2$pixid <- as.numeric(as.character(ppe2$pixid))
+ppe2$day <-as.Date(as.character(ppe2$date_Pl), "%Y%m%d")
+#ppe2$pixid <- as.numeric(as.character(ppe2$pixid))
+ppe2 <- ppe2[complete.cases(ppe2$blue),]
 
-#This should be moved to a different script, but for now, it stays
-ppe2$NDVI <- (ppe2$nir - ppe2$red) / (ppe2$nir + ppe2$red)
-ppe2$GNDVI <- (ppe2$nir - ppe2$green) / (ppe2$nir + ppe2$green)
-ppe2$GRVI <- (ppe2$green - ppe2$red) / (ppe2$green + ppe2$red)
-ppe2$GBVI <- (ppe2$blue - ppe2$green) / (ppe2$blue + ppe2$green)  
-ppe2$EVI <- 2.5 * ((ppe2$nir - ppe2$red) / (ppe2$nir + 6 * ppe2$red - 7.5 * ppe2$blue + 1))
-ppe2$GCVI <- (ppe2$nir/ppe2$green)-1
+ppe2 <- addVI(ppe2)
+
 
 startday <- min(ppe2$date)
 endday <- max(ppe2$date)
-write.csv(ppe2, paste0("data/planet/planet_timeseries_dip_polygons_", startday, "_",endday, ".csv" ))
+write.csv(ppe2, paste0("data/planet/planet_timeseries_50HA_polygons_", startday, "_",endday, ".csv" ))
 
 
-m <- read.csv("data/planet/planet_timeseries_dip_polygons_20180301_20200420.csv")
-mh <- aggregate(cbind(NDVI,GNDVI,GRVI,GBVI,EVI, GCVI, blue, green,  red,  nir )~pkuid+day, ppe2, median)
-
-mh$dipteryx <- 1
-
-andere <- rbind(mh, subset(fgrg, select = -c(date, ID)))
-
-
-write.csv(andere, paste0("data/planet/planet_timeseries_dip_polygonMedian_", startday, "_",endday, ".csv" ))
-
-
-sg <- table(as.data.frame(andere$day, andere$pkuid))

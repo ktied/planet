@@ -39,9 +39,9 @@ setwd(dp) ### set directory
 
 ###FIRST, A Single image 
 
-sep <- rast("input/PSScene/20230911_153434_97_2484_3B_AnalyticMS_SR_clip.tif")
+sep <- rast("data/input/PSScene/20230911_153434_97_2484_3B_AnalyticMS_SR_clip.tif")
 #1 blue, 2 green, 3 red , 4 NIR 
-udm2 <- rast("input/PSScene/20230911_153434_97_2484_3B_udm2_clip.tif")
+udm2 <- rast("data/input/PSScene/20230911_153434_97_2484_3B_udm2_clip.tif")
 plot(udm2)
 
 #Udm2 is the quality control - cloud, could shadow and the haze 
