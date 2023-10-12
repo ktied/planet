@@ -3,7 +3,7 @@
 #adapted from BCI repository: script 2a_planet_timeseries_extract 
 #11 October 2023
 
-#Planet extract: this script stacks raster files into a list, and has two helper functions to extract the data either from centroids or points or from the polygons of the crowns 
+#Planet extract: this script stacks raster files into a list, and has two helper functions: 1. to extract the data either from centroids or points 2. from the polygons of the crowns 
 
 library(terra)
 library(raster)
@@ -170,8 +170,8 @@ write.csv(ppe2, paste0("data/extracted_data/planet_timeseries_50HA_polygons_", s
 
 
 
-#2b. Not implemented. summarize the extract from a crown 
+#2b. Not implemented. Extract a single value, summarizing a crown 
 
 
-#If you have a single crown or want to define the function 
+#If you have a single crown or want to define the function: median, mean, max etc . Can apply to raster list 
 ac <- extract(d[[1]], crown, fun=median, xy = T, cells=T, method = "simple", bind=T)
