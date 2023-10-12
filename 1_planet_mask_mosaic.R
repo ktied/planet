@@ -5,16 +5,19 @@
 
 #The following code uses the Surface Reflectance (SR) Planet Images,
 #Masks the images with the udm2 clip, and then mosaics if there are multiple images for a single day 
-# 
 
-# Set up: 
+
+#User Set up: 
 #input folder
 indir <- paste0("data/input/")
 
 
 #output folder
 outdir <-'data/planet_masked/'
-#mosaic folder (taking multiple images per day and mosaicking them)\
+
+#mosaic folder (taking multiple images per day and mosaicking them)
+outMo <-'data/planet_processed/'
+
 
 #install.packages("gdalUtils", repos="http://R-Forge.R-project.org")
 
@@ -68,7 +71,7 @@ plotRGB(SepMasked, r=3, g=2, b=1, stretch = "lin")
 
 
 #####For use with multiple images per day, or multiple downloads#####
-####Mask with planet's udm2 mask in a for loop bc of creative ending....#####
+####Mask with planet's udm2 mask in a function #####
 
 #Repeats from above 
 #input folder
@@ -96,7 +99,7 @@ MaskFun <- function(x, indir , outdir, CF = 0 ){ #CF is the confidence 0-100
   outname <- paste0(outdir, outfile,'_ps4_3B_Analytic_MS_masked', '.tif')
   print(outname)
   
-#  if(!file.exists(outname)){ #This is to avoid rerunning 
+#  if(!file.exists(outname)){ #This is to avoid rerunning if you have a lot of planet files 
     rawrast <- rast(paste0(indir, x))
     print(paste0(indir,x))
     
@@ -137,7 +140,10 @@ s <- lapply(dn, MaskFun, indir, outdir, CF = 80)
 #Now you have cloud masked rasters, and for each date you may want to mosaic 
 
 #THis worked  well to mosaic the rasters - however GdalUtils has depreciated,
-#I'm now using vrt as suggested by Robert: #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
+#alternative methods since this is more of a personal preference:
+# as suggested by Robert: #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
+#Terra mosaic
+
 
 outMo <-'data/planet_processed/'
 
@@ -153,6 +159,7 @@ dt <- unlist(unique(pa))
 
 
 
+#The for loop mosaics files from the same day and puts the output in the folder you defined above 
 
 for (i in (1:length(dt))){
   
