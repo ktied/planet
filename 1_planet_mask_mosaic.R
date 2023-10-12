@@ -22,7 +22,7 @@ outdir <-'data/planet_masked/'
 library(terra)
 library(dismo)
 library(randomForest)
-library(gdalUtils)
+#library(gdalUtils)
 library(stringr)
 
 

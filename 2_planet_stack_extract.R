@@ -126,22 +126,6 @@ ac <- extract(d[[1]], crown, fun=median, xy = T, cells=T, method = "simple", bin
 
 #Id field, I'm choosing stemID 
 
-# 
-# 
-# 
-# 
-# 
-# 
-# #okay so what if we extract the polygons, maybe that's why we're not seeing a big signal??
-# dip <- shapefile("data/BCI_Dipteryx_maps/BCI_Dipteryx_maps/BCI_Dipteryx_Master_final.shp")
-# dip2 <- vect(dip)
-# dip2$pkuid <- as.numeric(dip2$pkuid)
-# #dex <- d[[2]]
-# 
-# dip2 <- crown
-# id <- "stemID"
-# rex = d[[1]]
-
 ExtrPolyFun <- function(rex, dip2, id){
   
   polyid <- unique(unlist(dip2[[id]]))
@@ -183,8 +167,8 @@ ppe2 <- ppe2[complete.cases(ppe2$blue),]
 ppe2 <- addVI(ppe2)
 
 #get the start and end of your raster list and write file to csv 
-startday <- min(ppe2$date)
-endday <- max(ppe2$date)
-write.csv(ppe2, paste0("data/planet/planet_timeseries_50HA_polygons_", startday, "_",endday, ".csv" ))
+startday <- min(ppe2$date_Pl)
+endday <- max(ppe2$date_Pl)
+write.csv(ppe2, paste0("data/extracted_data/planet_timeseries_50HA_polygons_", startday, "_",endday, ".csv" ))
 
 
