@@ -118,11 +118,7 @@ write.csv(fgrg, paste0("data/extracted_data/planet_timeseries_50HA_pts_", startd
 ##########################################
 ##################Polygons ################
 
-
-
-
-#If you have a single crown or want to define the function 
-ac <- extract(d[[1]], crown, fun=median, xy = T, cells=T, method = "simple", bind=T)
+#2a. Getting all planet values within a crown polygon 
 
 #Id field, I'm choosing stemID 
 
@@ -172,3 +168,10 @@ endday <- max(ppe2$date_Pl)
 write.csv(ppe2, paste0("data/extracted_data/planet_timeseries_50HA_polygons_", startday, "_",endday, ".csv" ))
 
 
+
+
+#2b. Not implemented. summarize the extract from a crown 
+
+
+#If you have a single crown or want to define the function 
+ac <- extract(d[[1]], crown, fun=median, xy = T, cells=T, method = "simple", bind=T)
