@@ -11,7 +11,7 @@ library(dismo)
 library(stringr)
 library(geodata)
 
-###Function to add Vegetation indicies### Can add more as desired 
+###Function to add Vegetation indices### Can add more as desired 
 #https://www.rdocumentation.org/packages/RStoolbox/versions/0.2.6/topics/spectralIndices
 addVI <- function(x){
   x$NDVI <- (x$nir - x$red) / (x$nir + x$red)
@@ -119,6 +119,7 @@ write.csv(fgrg, paste0("data/extracted_data/planet_timeseries_50HA_pts_", startd
 ##################Polygons #############
 
 #2a. Getting all planet values within a crown polygon 
+########################################
 
 #Id field, I'm choosing stemID 
 
@@ -169,9 +170,31 @@ write.csv(ppe2, paste0("data/extracted_data/planet_timeseries_50HA_polygons_", s
 
 
 
-
+#####################################
 #2b. Not implemented. Extract a single value, summarizing a crown 
+#####################################
 
 
 #If you have a single crown or want to define the function: median, mean, max etc . Can apply to raster list 
 ac <- extract(d[[1]], crown, fun=median, xy = T, cells=T, method = "simple", bind=T)
+
+addDate <- function(x){
+  dr <- sources(x)
+j <- str_extract(dr, "[^/]*$")[1] 
+x$date_Pl <- str_extract(j, "[^_]+")
+return(x)  
+
+}
+
+
+#To apply to the list of planet rasters 
+#Gives a list of spatvectors that you can work with
+gh <- lapply(d, terra::extract, crown, fun=median, xy=T, cells =T, method = "simple", bind=T)
+
+#or make them a dataframe
+gh2 <- lapply(gh, addDate) #kann nicht gracefully
+
+gh2 <- lapply(gh2, data.frame)
+gh2 <- do.call(rbind, gh2)
+
+#To do. add paste to the column names? 

@@ -149,7 +149,7 @@ outMo <-'data/planet_processed/'
 
 
 dn <- list.files(path = outdir, pattern = "*Analytic_MS_masked.tif$", recursive = T)
-j <- str_extract(dn, "[^/]*$") #unneccesary, but if they're in a subfolder helpful 
+j <- str_extract(dn, "[^/]*$") #unneccesary, but helpful if they're in a subfolder 
 
 #Extract just the date itself 
 pa <- str_extract(j, "[^_]+")
@@ -172,7 +172,7 @@ for (i in (1:length(dt))){
    # v <- vrt(c(rr)) #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
     gg <- lapply(rr, rast)
     rsrc <- sprc(gg)
-    m <- mosaic(rsrc)
+    m <- mosaic(rsrc) #default is mean 
     writeRaster(m, outname, overwrite =T)
     #mosaic_rasters(gdalfile = rr, dst_dataset = outname, of="GTiff", verbose=TRUE)#, co = list(list("COMPRESS" = "DEFLATE")))
   #}
