@@ -43,6 +43,7 @@ setwd(dp) ### set directory
 ###FIRST, A Single image 
 
 sep <- rast("data/input/PSScene/20230911_153434_97_2484_3B_AnalyticMS_SR_clip.tif")
+plot(sep)
 #1 blue, 2 green, 3 red , 4 NIR 
 udm2 <- rast("data/input/PSScene/20230911_153434_97_2484_3B_udm2_clip.tif")
 plot(udm2)
@@ -61,9 +62,9 @@ plot(udm2)
 # Band 8	Unusable pixels	--	Equivalent to the UDM asset: see Planet's Imagery Specification for complete details
 
 #From here, the idea 
-idealmask <- udm2[[1]] == 1 & udm2[[2]] == 0 & udm2[[3]]==0 & udm2[[4]]==0 & udm2[[5]]==0 & udm2[[6]] == 0& udm2[[7]] > 70
+idealmask <- udm2[[1]] == 1 & udm2[[2]] == 0 & udm2[[3]]==0 & udm2[[4]]==0 & udm2[[5]]==0 & udm2[[6]] == 0& udm2[[7]] > 70 
 idealmask[idealmask==0] <- NA
-#This space for testing. For loops that should be functions below:::##
+#This space for testing. Functions below##
 SepMasked <- mask(sep, idealmask)
 plot(SepMasked)
 
@@ -97,7 +98,8 @@ MaskFun <- function(x, indir , outdir, CF = 0 ){ #CF is the confidence 0-100
   
   
   outname <- paste0(outdir, outfile,'_ps4_3B_Analytic_MS_masked', '.tif')
-  print(outname)
+  print(paste0("working on file: ", outname))
+  
   
 #  if(!file.exists(outname)){ #This is to avoid rerunning if you have a lot of planet files 
     rawrast <- rast(paste0(indir, x))
@@ -139,7 +141,7 @@ s <- lapply(dn, MaskFun, indir, outdir, CF = 80)
 
 #Now you have cloud masked rasters, and for each date you may want to mosaic 
 
-#THis worked  well to mosaic the rasters - however GdalUtils has depreciated,
+#This worked  well to mosaic the rasters - however GdalUtils has depreciated,
 #alternative methods since this is more of a personal preference:
 # as suggested by Robert: #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
 #Terra mosaic
@@ -164,7 +166,7 @@ dt <- unlist(unique(pa))
 for (i in (1:length(dt))){
   
   outname <- paste0(outMo, dt[i],'_ps4_3B_Analytic_MS_processed', '.tif')
-  print(outname)
+  print(paste0("working on file: ",outname))
   #if(!file.exists(outname)){  #This piece can be uncommented if you're rerunning and don't want to redo work 
 
     rr <- dn[grep(dt[i], dn)]
