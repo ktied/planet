@@ -62,7 +62,7 @@ plot(udm2)
 # Band 8	Unusable pixels	--	Equivalent to the UDM asset: see Planet's Imagery Specification for complete details
 
 #From here, the idea 
-idealmask <- udm2[[1]] == 1 & udm2[[2]] == 0 & udm2[[3]]==0 & udm2[[4]]==0 & udm2[[5]]==0 & udm2[[6]] == 0& udm2[[7]] > 70 
+idealmask <- udm2[[1]] == 1 & udm2[[2]] == 0 & udm2[[3]]==0 & udm2[[4]]==0 & udm2[[5]]==0 & udm2[[6]] == 0& udm2[[7]] > 85 
 idealmask[idealmask==0] <- NA
 #This space for testing. Functions below##
 SepMasked <- mask(sep, idealmask)
@@ -174,7 +174,7 @@ for (i in (1:length(dt))){
    # v <- vrt(c(rr)) #https://stackoverflow.com/questions/67169266/error-in-mosaic-of-rasters-from-different-extent-using-terra-package-in-r
     gg <- lapply(rr, rast)
     rsrc <- sprc(gg)
-    m <- mosaic(rsrc) #default is mean 
+    m <- mosaic(rsrc) #default is mean # 
     writeRaster(m, outname, overwrite =T)
     #mosaic_rasters(gdalfile = rr, dst_dataset = outname, of="GTiff", verbose=TRUE)#, co = list(list("COMPRESS" = "DEFLATE")))
   #}

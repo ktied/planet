@@ -52,7 +52,7 @@ d
 ####Read crown data #####
 
 crown <- vect('data/Crowns/Crowns_2020_08_01_FullyMergedWithPlotData.shp')
-plot(crown) #not sure what's happening some artifact or point outside the norm. - could clip this later to bci for ease 
+plot(crown) #not sure what's happening some artifact or point outside the norm. - clip this later to bci for ease, likely a terra problem 
 crs(crown)
 
 crown <- project(crown, crs(d[[1]]))
@@ -79,7 +79,7 @@ y <- terra::centroids(crown) #,TRUE) #not a "true centroid", but will be inside 
 #True centroids may be outside a polygon, for example when a polygon is "bean shaped")
 
 
-extFund <- function(listrast, pts){
+extFund <- function(listrast, pts){ #input raster, and points 
   
   al <- extract(listrast, pts,  xy = T, method = "simple", bind=T)
   x <- cbind(pts, al)
@@ -123,7 +123,7 @@ write.csv(fgrg, paste0("data/extracted_data/planet_timeseries_50HA_pts_", startd
 
 #Id field, I'm choosing stemID 
 
-ExtrPolyFun <- function(rex, dip2, id){
+ExtrPolyFun <- function(rex, dip2, id){ #input is your raster, vector, and the unique identifier column 
   
   polyid <- unique(unlist(dip2[[id]]))
   polylist <- list() 
@@ -192,7 +192,7 @@ return(x)
 gh <- lapply(d, terra::extract, crown, fun=median, xy=T, cells =T, method = "simple", bind=T)
 
 #or make them a dataframe
-gh2 <- lapply(gh, addDate) #kann nicht gracefully
+gh2 <- lapply(gh, addDate) #
 
 gh2 <- lapply(gh2, data.frame)
 gh2 <- do.call(rbind, gh2)
